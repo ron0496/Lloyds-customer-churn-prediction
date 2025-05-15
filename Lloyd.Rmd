@@ -1,0 +1,1122 @@
+---
+title: "Customer Churn Prediction Lloyds Banking Group"
+author: "Rounak Saha"
+date: "2025-05-07"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+# Introduction 
+Welcome to the Data Science & Analytics team at Lloyds Banking Group. As a new data science graduate, I  have been entrusted with a critical project that could significantly impact our customer retention strategies. Li, our senior data scientist, has specifically chosen me to take over this project due to my strong analytical skills and enthusiasm for solving real-world business problems. This is an exciting opportunity for me to apply my knowledge and make a real impact within our team.
+
+#### Context
+The project I am about to embark on is the "Customer Retention Enhancement through Predictive Analytics" initiative. This project arose from an urgent need to address declining retention rates within certain segments of our customer base. Over the past few months, we've noticed a worrying trend of increased customer churn, particularly among young professionals and small business owners. This poses a substantial threat to our market position and long-term profitability.
+
+Our fictional client, SmartBank, a subsidiary of Lloyds, has reported that a substantial portion of their customer base is at risk of moving to competitors offering more personalised banking solutions. SmartBank has tasked our team with developing a predictive model to identify at-risk customers and propose targeted interventions to retain them.
+
+### Task 1 
+#### Introduction
+In this task, I will take the first critical steps toward building a predictive model for customer churn. Your work will involve gathering relevant data, conducting EDA, and preparing the data set for model development. These activities are foundational for ensuring the accuracy and reliability of your subsequent analysis and predictions.
+
+**Identify and gather data:**
+
+*	Review the provided data sources and select those most relevant for predicting customer churn. Focus on key areas such as customer demographics, transaction history, and customer service interactions.
+
+*	Document your selection criteria and rationale for choosing each data set, ensuring that the data will provide meaningful insights into customer behaviour.
+
+**Perform EDA:**
+
+*	Use statistical techniques and data visualisation tools to explore the data sets. Create visualisations such as histograms, scatter plots, and box plots to understand distributions, trends, and relationships between variables.
+
+*	Identify key features that may influence customer churn, paying special attention to patterns or anomalies that could be significant.
+
+**Clean and preprocess the data:**
+
+*	Handle missing values by choosing appropriate methods such as imputation, removal, or flagging. Justify your chosen method based on the data and context.
+
+*	Detect and address outliers that could skew the analysis or predictions. Decide whether to cap, transform, or remove outliers based on their nature and potential impact.
+
+*	Standardise or normalise numerical features to ensure consistent scales across variables. This step is crucial for preparing the data for machine learning algorithms.
+
+*	Encode categorical variables using techniques like one-hot encoding to transform them into a numerical form appropriate for analysis.
+
+**Deliverable:**
+
+**File submission:** Submit a comprehensive report detailing your data gathering, EDA, and data cleaning processes. The report should include:
+
+* A summary of the data sets selected and the rationale for their inclusion
+
+* Visualisations and statistical summaries from the EDA
+
+* A description of the data cleaning and preprocessing steps taken
+
+* The cleaned and preprocessed data set ready for model building
+
+*Ensure that your report is clear, concise, and well-organised, as it will be a key component of the project's success, guiding future analysis and model development.*
+
+#### Load required packages and dataset 
+```{r, echo = TRUE, eval = TRUE, results="hide", fig.keep = "none"}
+# install required packages
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+install.packages("tidyverse")
+install.packages("readxl", type = "source")
+# install.packages("psych") ---- stats summary of the dataset
+install.packages("skimr")       ## Detailed descriptive stats, includes numeric and categorical
+install.packages("ggplot2")
+install.packages("dplyr")
+install.packages("fastDummies") ## for one-hot encoding
+install.packages("data.table")
+install.packages("e1071")
+install.packages("corrplot") # plotting heatmap
+install.packages("caTools")
+install.packages("caret") # train control 
+install.packages("ROSE") # sampling imbalanced dataset
+install.packages("smotefamily")
+install.packages("rpart") #partitioning of the decision tree
+install.packages("rpart.plot") #plot the decesion tree
+install.packages("data.tree") #to get nice visual 
+install.packages("pROC") #RoC curve
+install.packages("randomForest")
+install.packages("xgboost")
+```
+
+```{r, echo = TRUE, eval = TRUE, results="hide", fig.keep = "none"}
+# load the required libraries
+library(tidyverse)
+library(readxl)
+library(skimr)
+#library(psych)
+library(ggplot2)
+library(dplyr)
+library(fastDummies)
+library(data.table)
+library(e1071)
+library(corrplot)
+library(caTools)
+library(caret)
+library(ROSE)
+library(smotefamily)
+library(rpart)
+library(rpart.plot)
+library(data.tree)
+library(pROC)
+library(randomForest)
+library(xgboost)
+```
+
+```{r, echo = TRUE, eval = TRUE, results="hide", fig.keep = "none"}
+# We load the Excel workbook that contains multiple sheets of customer-related data
+customer_demo <- read_xlsx("Customer_Churn_Data_Large.xlsx", sheet = 1, col_names = TRUE)
+transaction_hist <- read_xlsx("Customer_Churn_Data_Large.xlsx", sheet = 2, col_names = TRUE)
+customer_service <- read_xlsx("Customer_Churn_Data_Large.xlsx", sheet = 3, col_names = TRUE)
+online_activity <- read_xlsx("Customer_Churn_Data_Large.xlsx", sheet = 4, col_names = TRUE)
+churn_status <- read_xlsx("Customer_Churn_Data_Large.xlsx", sheet = 5, col_names = TRUE)
+```
+
+The dataset consists of multiple sheets from an Excel file. The above datasets were selected
+based on their relevance to Customer Churn prediction. All datasets have their respective data
+with the Customer ID which helps uniquely identify a customer.
+
+* **Customer Demographics:**
+Contains features like Age, Gender, Marital Status and Income Level. These features are
+critical since demographic features often influence customer behaviour.
+There are 1000 samples in the dataset, one for each customer ID.
+
+* **Transaction History:**
+Included features are: Transaction ID, Transaction Date, Amount Spent and Product
+Category. The Transaction ID was a redundant column since it is used to identify each
+transaction which has no effect on customer churn.
+There are 5054 samples in the dataset.
+Transaction patterns reveal spending behaviour which may affect churn.
+
+* **Customer Service:**
+Include features like Interaction ID, Interaction Date, Interaction Type and Resolution
+Status. Customer service Interactions like Unresolved complaints could be a crucial
+indicator for customer churn.
+Samples: 1001
+
+* **Online Activity:**
+This dataset contains the various online service usage of customers. Includes features
+like Last Login Date, Login Frequency and Service Usage. The online service usage
+patterns could signal a customer likely to churn. A high user may not be as likely to leave
+as their counterpart.
+Samples: 1000
+
+* **Churn Status:**
+The target variable ‘Churn Status’ indicates whether a customer has churned (1) or not
+(0). 1000 unique samples in the dataset.
+
+#### Exploratory Data Analysis
+
+In this stage, we conduct a thorough exploration of the dataset using both statistical summaries and visualizations. The goal is to understand variable distributions, detect anomalies, identify relationships between features, and uncover patterns that may influence customer churn.
+
+Key steps include:
+
+* Examining the distribution of numeric and categorical variables
+* Identifying potential correlations or trends
+* Visualizing churn rates across different customer segments
+* Highlighting any unusual or missing data that requires attention
+
+##### Customer demographics
+```{r}
+head(customer_demo)
+str(customer_demo)
+skim(customer_demo)
+table(customer_demo$Gender)
+table(customer_demo$MaritalStatus)
+table(customer_demo$IncomeLevel)
+```
+
+The descriptive statistics of the dataset shows a well balanced demographics data.
+
+* Gender : Males and Females are equally distributed
+
+* Age : Mean age is 43, and the customer base ranges from age 18 to 69.
+
+* Marital status : There are 4 unique values, and the statistics suggest it is roughly equally distributed.
+
+* Income level : Three unique levels for this feature, and equally distributed.
+
+```{r}
+# checking for duplicates 
+sum(duplicated(customer_demo))
+# there are no duplicate values and missing value
+```
+
+```{r,warning=FALSE}
+# plotting age distribution 
+ggplot(data = customer_demo, aes(x =Age)) + 
+  geom_histogram(binwidth= 2, fill = "navyblue", color = "black", alpha= 0.8) + 
+  geom_density(aes(y= ..count..*2), color= "coral", size = 1) + 
+  labs(title = "Age Distribution with Density Curve", x = "Age", y = "Count")+
+  theme_minimal()
+```
+
+The spread of the Age column is uniform, the customer base is uniformly distributed across all age groups.
+
+```{r}
+# Plotting Gender distribution 
+ggplot(data= customer_demo, aes(x= Gender)) +
+  geom_bar(fill = "navyblue", color = "black", alpha = 0.8)+ theme_minimal()+
+  labs( title = "Gender Distribution", x= "Gender", y= "Count")
+  
+```
+
+```{r}
+# Plotting Marital Status distribution 
+ggplot(data= customer_demo, aes(x= MaritalStatus)) +
+  geom_bar(fill = "navyblue", color = "black", alpha = 0.8)+ theme_minimal()+
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, color = "black", fontface = "bold")+
+  labs( title = "Marital Status distribution", x= "Marital Status", y= "Count")+
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, fontface = "bold")
+
+cust_demo_churn <- left_join(customer_demo, churn_status, by = "CustomerID")
+
+ggplot(data = cust_demo_churn, 
+       aes(x = factor(MaritalStatus), fill = factor(ChurnStatus, labels = c("Retained", "Churned")))) +
+  geom_bar(color = "black", alpha = 0.8, position = "dodge") +
+  scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Gender distribution with Churn", x = "Marital Status", y = "Count", fill = "Status") +
+  theme_minimal()
+```
+
+```{r}
+# Plotting income level distribution 
+ggplot(data = customer_demo, aes(x= IncomeLevel))+
+  geom_bar(fill= "navyblue", color = "black", alpha= 0.8)+ theme_minimal()+
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, fontface = "bold")+
+  labs(title = "Income distribution", x= "Income Level", y= "Count")
+```
+
+```{r}
+# plotting the median age of customers in each income level and marital status
+customer_demo %>% group_by(IncomeLevel, MaritalStatus) %>% 
+  summarise(median_age = median(Age),.groups = 'drop') %>% 
+  ggplot(aes(x = IncomeLevel, y = median_age, fill = MaritalStatus))+ 
+  geom_bar(stat = "identity", position = "dodge",color= "grey")+
+  labs(title = "Age by Income Level and Marital Status",
+       x = "Income Level", y = "Age") +
+  scale_fill_manual(values = c("Married" = "#1B1A55", "Single" = "#535C91", "Divorced" = "#070F2B", "Widowed"= "#9290C3"))+
+  geom_text(aes(label = round(median_age, 0)), position = position_dodge(width = 0.9), 
+            vjust = -0.5)+
+  theme_minimal()
+```
+
+The data is equally distributed across different categories
+
+```{r}
+# Encoding the categorical variables 
+# Label encoding for Gender & Income Level
+customer_demo$Gender <- as.numeric(factor(customer_demo$Gender, levels = unique(customer_demo$Gender)))-1
+customer_demo$IncomeLevel <- as.numeric(factor(customer_demo$IncomeLevel, 
+                                               levels = c("Low", "Medium", "High"),
+                                               labels = c(0,1,2)))-1
+# one-hot encoding for Marital status
+customer_demo <- dummy_cols(customer_demo, select_columns = "MaritalStatus", 
+                            remove_first_dummy = FALSE,
+                            remove_selected_columns = TRUE)
+head(customer_demo)
+```
+
+All categorical features has been converted to numerical values.
+
+##### Transaction History
+```{r}
+head(transaction_hist)
+str(transaction_hist)
+summary(transaction_hist)
+table(transaction_hist$ProductCategory)
+
+# the product category variable is almost distributed equally 
+```
+
+The descriptive statistics of the dataset shows a well balanced transaction data.
+
+* Amount spent : Mean Amount spent by customers is $250, and ranges from $5 to $500.
+
+* Product category : Five unique levels for this feature, and equally distributed.
+
+
+```{r}
+# check for null and duplicate values 
+sum(is.na(transaction_hist))
+
+sum(duplicated(transaction_hist))
+```
+
+The dataset is clean without any null & duplicate values.
+
+TransactionID is a redundant column. It represents an id to refer to the transaction which is irrelevant to customer churn, so it can be dropped.
+
+There are multiple transaction histories for a given customer, so feature engineering is required to aggregate multiple histories and create relevant features.
+
+```{r}
+# Plotting transaction records by date 
+ggplot(data = transaction_hist, aes(x= as.Date(TransactionDate))) + 
+  geom_histogram(binwidth= 5, fill= "navyblue", color = "black", alpha= 0.8)+ theme_minimal()+
+  geom_density(aes(y= ..count..*5), color= "coral", size = 1)+
+  labs(title = "No of transactions by date", x= "Date", y = "Transaction count")
+
+```
+
+```{r}
+# Plotting amount spend 
+ggplot(data = transaction_hist, aes(x = AmountSpent)) + 
+  geom_histogram(binwidth = 10, fill= "navyblue", color= "black", alpha= 0.8)+ theme_minimal()+
+  geom_density(aes(y= ..count..* 10), color= "coral", size= 1)+
+    labs(title = "Frequency of Amount spent", x= "Amount spent", y = "Count")
+```
+
+The Customer transactions and Amount spent are roughly uniformly distributed.
+
+```{r,warning=FALSE}
+# Plotting frequency of transaction in each category 
+ggplot(data= transaction_hist, aes(x = ProductCategory))+
+  geom_histogram(stat = "count", fill= "navyblue", color= "black", alpha= 0.8)+
+  geom_text(stat= "count", aes(label= ..count..), vjust= -0.5, fontface= "bold")+
+  labs(title = "Frequency of transaction in each category ", x= "Product Category", y = "Count")+
+  theme_minimal()
+```
+
+```{r}
+# Mean amount spent for each category 
+transaction_hist %>% group_by(ProductCategory) %>% 
+  summarise(total_amt_spent = mean(AmountSpent)) %>% 
+  ggplot(aes(x= ProductCategory, y= total_amt_spent)) + geom_bar(stat = "identity",fill= "navyblue", color= "black", alpha= 0.8)+
+  labs(title = "Average amount spent by category ", x= "Product Category", y = "Average amount spent")+
+  geom_text(aes(label = round(total_amt_spent,0)), vjust= -0.5, fontface= "bold")+
+  theme_minimal()
+```
+
+```{r}
+# one-hot encoding for Product Category
+transaction_hist <- dummy_cols(transaction_hist, 
+                               select_columns = "ProductCategory",
+                               remove_first_dummy = FALSE,
+                               remove_selected_columns = TRUE)
+```
+
+```{r}
+# dropping transaction ID column
+transaction_hist<- transaction_hist[,-2]
+
+# converting the transaction date to Transaction_frequency and grouping by customer ID
+transaction_hist<- transaction_hist %>% group_by(CustomerID) %>% summarise(Total_amount_spent =sum(AmountSpent),
+                                                        Transaction_frequency= n(),
+                                                        Books= sum(ProductCategory_Books),
+                                                        Clothing= sum(ProductCategory_Clothing),
+                                                        Electronics= sum(ProductCategory_Electronics),
+                                                        Furniture= sum(ProductCategory_Furniture),
+                                                        Groceries= sum(ProductCategory_Groceries))
+
+
+```
+
+The categorical features has been converted to numeric values.
+
+##### Customer Service
+```{r}
+head(customer_service)
+str(customer_service)
+summary(customer_service)
+table(customer_service$InteractionType)
+table(customer_service$ResolutionStatus)
+
+# check null and duplicates
+sum(is.na(customer_service))
+sum(duplicated(customer_service))
+```
+
+The descriptive statistics of the dataset shows a well balanced customer service data.
+
+* InteractionType : Three unique levels for this feature, and equally distributed.
+
+* Resolution Status : Two unique levels for this feature, and equally distributed.
+
+InteractionID is a redundant column. It represents an id to refer to the interaction which is irrelevant to customer churn, so it can be dropped.
+
+```{r}
+customer_service <- customer_service[,-2]
+```
+
+```{r, warning=FALSE}
+# Customer Service Interaction by Interaction Type & Resolution Status
+
+ggplot(data = customer_service, aes(x= InteractionType, fill = ResolutionStatus))+ 
+  geom_histogram(stat = "count",position = "dodge",color= "black", alpha= 0.8)+
+  scale_fill_manual(values = c("Resolved" = "#1B1A55", "Unresolved"= "#9290C3"))+
+  labs(title = "Customer Service Interaction by Interaction Type & Resolution Status", x= "Interaction Type", y = "Count")+
+  geom_text(stat= "count", aes(label = ..count..),position = position_dodge(width = 0.9), vjust= -0.5, fontface= "bold")+
+  theme_minimal()
+```
+
+```{r}
+# Plotting Interaction Type through time
+ggplot(data = customer_service, aes(x = as.Date(InteractionDate), fill = InteractionType)) + 
+  geom_histogram(position = "stack", binwidth = 30, color = "black", alpha = 0.8) +
+  scale_fill_manual(values = c("Feedback" = "#535C91", "Inquiry" = "#070F2B", "Complaint"= "#9290C3"))+
+  geom_text(stat = "bin",binwidth = 30,aes(label = ..count.., group = InteractionType),
+    position = position_stack(vjust = 0.5),color = "white", size = 4,fontface= "bold") +
+    labs(title = "Interaction Type through time ", x= "Interaction Date", y = "Count")+
+  theme_minimal()
+```
+
+```{r}
+# Plotting Resolution Status through time
+ggplot(data = customer_service, aes(x = as.Date(InteractionDate), fill = ResolutionStatus)) + 
+  geom_histogram(position = "stack", binwidth = 30, color = "black", alpha = 0.8) +
+  scale_fill_manual(values = c("Resolved" = "#070F2B", "Unresolved"= "#9290C3"))+
+  geom_text(stat = "bin",binwidth = 30,aes(label = ..count.., group = ResolutionStatus),
+    position = position_stack(vjust = 0.5),color = "white", size = 4,fontface= "bold") +
+    labs(title = "Resolution Status through time ", x= "Interaction Date", y = "Count")+
+  theme_minimal()
+```
+
+The features and their relationship with each other are uniform. The interaction types and Resolution Status have stayed consistent over time.
+
+```{r}
+# Plotting Interaction & Resolution Status through time
+ggplot(data = customer_service, aes(x = as.Date(InteractionDate), fill = ResolutionStatus)) + 
+  geom_histogram(position = "stack", binwidth = 30, color = "black", alpha = 0.8) +
+  scale_fill_manual(values = c("Resolved" = "#070F2B", "Unresolved" = "#9290C3")) +
+  labs(title = "Interaction & Resolution Status through time", 
+       x = "Interaction Date", y = "Count") +
+  theme_minimal() +
+  facet_wrap(vars(InteractionType))+theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+```
+
+The complaints have reduced recently and enquiry resolution have gotten better over time which is shown by the increasing share of 'Resolved' status across categories.
+
+The Unresolved Enquiries, particularly Complaints could be a significant factor in customer churn.
+
+```{r}
+head(churn_status)
+```
+
+```{r}
+# Plot churn status of customers who have unresolved complaints
+df1<- unique(customer_service[customer_service$InteractionType == "Complaint" & 
+                 customer_service$ResolutionStatus == "Unresolved", 
+                 c(1, 3, 4)])
+df2 <-left_join(df1, churn_status, by= "CustomerID")
+
+ggplot(df2, aes(x = as.factor(ChurnStatus))) +
+  geom_bar(fill = "navyblue", color = "black", alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "Churn status of customers with unresolved complaints", x = "Churn Status", y = "Count")+
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, fontface = "bold")
+```
+
+A direct correlation cannot be found between Unresolved complaints and Churn status.
+
+```{r}
+# creating feature days since last interaction to the most recent date
+max_date <-as.Date(max(customer_service$InteractionDate))
+customer_service$InteractionDate <- as.Date(customer_service$InteractionDate)
+customer_service$DaysSinceLastInteraction <- as.numeric(max_date - customer_service$InteractionDate)
+head(customer_service)
+```
+
+```{r}
+# Encoding the categorical variables 
+# one-hot encoding for Interaction Type & Resolution Status
+customer_service <- dummy_cols(customer_service, select_columns = "InteractionType", 
+                            remove_first_dummy = FALSE,
+                            remove_selected_columns = TRUE)
+
+customer_service <- dummy_cols(customer_service, select_columns = "ResolutionStatus", 
+                            remove_first_dummy = FALSE,
+                            remove_selected_columns = TRUE)
+```
+
+```{r}
+# dropping InteractionDate column
+customer_service<- customer_service[,-2]
+
+# converting the Interaction date to DaysSinceLastLogin and grouping by customer ID
+customer_service<- customer_service %>% group_by(CustomerID) %>% summarise(DaysSinceLastInteraction =max(DaysSinceLastInteraction),
+                                                        Resolved= sum(ResolutionStatus_Resolved),
+                                                        Unresolved= sum(ResolutionStatus_Unresolved),
+                                                        Complaint= sum(InteractionType_Complaint),
+                                                        Feedback= sum(InteractionType_Feedback),
+                                                        Inquiry= sum(InteractionType_Inquiry))
+
+
+```
+
+#### Online Activity
+```{r}
+head(online_activity)
+str(online_activity)
+summary(online_activity)
+table(online_activity$ServiceUsage)
+
+# check null and duplicates
+sum(is.na(online_activity))
+sum(duplicated(online_activity))
+```
+
+The descriptive statistics of the dataset shows a well balanced customer activity data.
+
+* Login Frequency: Customers have a mean login frequency of 25 times, with a min of 1 and max 49 throughout the time period 
+
+* Service Usage: There are 3 types of service customers avail, those are through mobile app, Online banking and website. And the data has roughly equal distribution
+
+```{r}
+# Average login per month 
+online_activity %>% 
+  mutate(monthYear = floor_date(LastLoginDate, "month")) %>% 
+  group_by(monthYear) %>% 
+  summarise(mean = mean(LoginFrequency),.groups = "drop") %>% 
+  mutate(monthYear = format(monthYear, "%b %Y")) %>%
+  ggplot(aes(x= monthYear, y= mean)) +
+  geom_bar(stat = "identity", fill = "navyblue", color = "black", alpha = 0.8)+
+  theme(axis.text.x = element_text(angle = 45))+
+  labs(title = "Average login per month", x= "Date", y= "Mean Login Frequency")+
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45))+
+  geom_text(aes(label = round(mean,0)), vjust = -0.5, fontface = "bold")
+```
+
+Average login Frequency is distributed equally over the year
+
+```{r}
+df3<- left_join(online_activity, churn_status, by= "CustomerID")
+```
+
+
+
+```{r}
+# Login frequency distribution with churn status 
+ggplot(data= df3, aes(x = LoginFrequency, fill = factor(ChurnStatus,labels = c("Retained","Churned"))))+
+  geom_histogram(binwidth= 2, color= "black", alpha= 0.8,position = "identity")+
+      geom_density(aes(y = ..count.. * 2, 
+                       color = factor(ChurnStatus,labels = c("Retained", "Churned"))), 
+                   size = 1.2, alpha = 0,show.legend = FALSE) +
+    scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+    scale_color_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Login frequency distribution", x= "LoginFrequency", y = "Count", fill = "Status")+
+  theme_minimal()
+
+```
+
+The login frequencies of customers is spread across unifromly, but customers with very low login frequency tend to have churned more.
+
+```{r, warning=FALSE}
+# Service Usage Pattern by Churn Status
+ggplot(data = df3)+
+  geom_histogram(aes(x= ServiceUsage,
+              fill= factor(ChurnStatus,labels = c("Retained","Churned"))), 
+              stat = "count", position = "dodge", color= "black")+
+   geom_text(stat = "count",aes(x = ServiceUsage, label= ..count.., group = factor(ChurnStatus)),
+    position = position_dodge(width = 0.9),color = "black", size = 4,fontface= "bold", vjust= -0.5)+
+    scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+    labs(title = "Service Usage Pattern by Churn Status", x= "Service Usage", y = "Count", fill= "Status")+
+    theme_minimal()
+
+```
+
+```{r}
+# creating feature days since last login to the most recent date
+max_date <-as.Date(max(online_activity$LastLoginDate))
+online_activity$LastLoginDate <- as.Date(online_activity$LastLoginDate)
+online_activity$DaysSinceLastLogin <- as.numeric(max_date - online_activity$LastLoginDate)
+
+#remove Last Login Date
+online_activity <- online_activity[,-2]
+```
+
+The customer use all the banking services equally.
+
+```{r}
+# one-hot encoding for Service Usage
+online_activity <- dummy_cols(online_activity, 
+                              select_columns = "ServiceUsage", 
+                              remove_first_dummy = FALSE,
+                              remove_selected_columns = TRUE)
+
+head(online_activity)
+```
+
+Merging all the 5 datasets to see the patterns 
+```{r}
+str(customer_demo)
+str(transaction_hist)
+str(customer_service)
+str(online_activity)
+str(churn_status)
+
+
+customer_churn_df <- customer_demo %>%
+  left_join(transaction_hist, by = "CustomerID") %>%
+  left_join(customer_service, by = "CustomerID") %>%
+  left_join(online_activity, by = "CustomerID") %>%
+  left_join(churn_status, by = "CustomerID")
+```
+
+```{r}
+sum(duplicated(customer_churn_df))
+colSums(is.na(customer_churn_df))
+```
+
+There are large amount of null values in some columns, removing all these column can result in significant amount of data loss so we have to impute the null values using appropriate method before sending it for model prediction 
+
+Best method for imputing columns like Resolved, Unresolved, Complaint, Feedback & Inquiry is to replace with 0 as the customer had never had any interaction 
+
+```{r}
+customer_churn_df$Resolved[is.na(customer_churn_df$Resolved)] = 0
+customer_churn_df$Unresolved[is.na(customer_churn_df$Unresolved)] = 0
+customer_churn_df$Complaint[is.na(customer_churn_df$Complaint)] = 0
+customer_churn_df$Feedback[is.na(customer_churn_df$Feedback)] = 0
+customer_churn_df$Inquiry[is.na(customer_churn_df$Inquiry)] = 0
+
+customer_churn_df$DaysSinceLastInteraction[is.na(customer_churn_df$DaysSinceLastInteraction)]=
+  median(customer_churn_df$DaysSinceLastInteraction, na.rm = TRUE)
+
+sum(is.na(customer_churn_df))
+
+uniqueN(customer_churn_df$CustomerID)
+```
+
+There are no duplicate customer ID in the dataset 
+
+```{r}
+str(customer_churn_df)
+```
+EDA on preprocessed data:
+
+```{r}
+# Age distribution with Churn
+ggplot(data= customer_churn_df, aes(x = Age, fill = factor(ChurnStatus,labels = c("Retained","Churned"))))+
+  geom_histogram(binwidth=2, color= "black", alpha= 0.8,position = "identity")+
+      geom_density(aes(y = ..count.. * 2, 
+                       color = factor(ChurnStatus,labels = c("Retained", "Churned"))), 
+                   size = 1.2, alpha = 0,show.legend = FALSE) +
+    scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+    scale_color_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Age distribution with Churn", x= "Age", y = "Count", fill = "Status")+
+  theme_minimal()
+```
+
+```{r}
+# Gender distribution with Churn
+ggplot(data = customer_churn_df, 
+       aes(x = factor(Gender), fill = factor(ChurnStatus, labels = 
+                                               c("Retained", "Churned")))) +
+  geom_bar(color = "black", alpha = 0.8, position = "dodge") +
+    scale_x_discrete(labels = c("0" = "Male", "1" = "Female")) +
+  scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Gender distribution with Churn", x = "Gender", y = "Count", fill = "Status") +
+  theme_minimal()
+```
+
+```{r}
+# Churn Rate vs Income Level
+ggplot(data = customer_churn_df, 
+       aes(x = factor(IncomeLevel), fill = factor(ChurnStatus, labels = c("Retained", "Churned")))) +
+  geom_bar(color = "black", alpha = 0.8, position = "dodge") +
+    scale_x_discrete(labels = c("0" = "Low", "1" = "Medium", "2"= "High")) +
+  scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Churn Rate vs Income Level", x = "Income Level", y = "Count", fill = "Status") +
+  theme_minimal()
+```
+
+
+```{r}
+# Amount spent with Churn
+ggplot(data= customer_churn_df, aes(x = Total_amount_spent, fill =
+                                      factor(ChurnStatus,labels=
+                                               c("Retained","Churned"))))+
+  geom_histogram(binwidth= 150, color= "black", alpha= 0.8,position = "identity")+
+      geom_density(aes(y = ..count.. * 150, 
+                       color = factor(ChurnStatus,labels = c("Retained", "Churned"))), 
+                   size = 1.2, alpha = 0,show.legend = FALSE) +
+    scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+    scale_color_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Amount spent with Churn", x= "Total Amount Spent", y = "Count", fill = "Status")+
+  theme_minimal()
+```
+
+
+```{r}
+# Days Since Last Login with Churn
+ggplot(data= customer_churn_df, aes(x = DaysSinceLastLogin, fill = factor(ChurnStatus,labels = c("Retained","Churned"))))+
+  geom_histogram(binwidth= 10, color= "black", alpha= 0.8,position = "identity")+
+  geom_density(aes(y = ..count.. * 10, 
+                   color = factor(ChurnStatus,labels = c("Retained", "Churned"))), 
+               size = 1.2, alpha = 0,show.legend = FALSE) +
+  scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  scale_color_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Days Since Last Login with Churn", 
+       x= "Days Since Last Login", y = "Count", fill = "Status")+
+  theme_minimal()
+
+```
+
+```{r}
+# Days Since Last Interaction with Churn
+ggplot(data= customer_churn_df, aes(x = DaysSinceLastInteraction,fill=
+                                      factor(ChurnStatus,labels=
+                                               c("Retained","Churned"))))+
+  geom_histogram(binwidth= 10, color= "black", alpha= 0.8,position = "identity")+
+  geom_density(aes(y = ..count.. * 10, 
+                   color = factor(ChurnStatus,labels = c("Retained", "Churned"))), 
+               size = 1.2, alpha = 0,show.legend = FALSE) +
+  scale_fill_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  scale_color_manual(values = c("Churned" = "#070F2B", "Retained" = "#9290C3")) +
+  labs(title = "Days Since Last Interaction with Churn", x= "DaysSinceLastInteraction",
+       y = "Count", fill = "Status")+
+  theme_minimal()
+```
+
+```{r}
+str(customer_churn_df)
+# remove custome ID column
+customer_churn_df<- customer_churn_df[,-1]
+```
+
+
+
+```{r}
+# Plot heatmap
+# convert all columns to numeric 
+
+i <- c(1:26)
+customer_churn_df[, i] <- apply(customer_churn_df[, i], 2, function(x) as.numeric(x))
+```
+
+```{r}
+
+str(customer_churn_df)
+customer_churn_df<- as.matrix(customer_churn_df)
+class(customer_churn_df)
+
+```
+
+```{r,fig.width=9, fig.height=9}
+# Compute correlation matrix
+# Plot heatmap with correlation values
+corrplot(cor(customer_churn_df),
+         method = "color",        # color tiles
+         #col = COL2('RdYlBu'),
+         col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))(10),
+         type = "full",          # show upper triangle only
+         addCoef.col = "black",   # add correlation coefficients
+         tl.col = "black",        # text color
+         number.cex = 0.5,        # size of correlation numbers
+         tl.cex = 0.6,            # size of variable labels
+         diag = TRUE,             # hide diagonal
+         order = "AOE",
+         outline= TRUE)
+```
+
+```{r}
+# Check skewness 
+customer_churn_df<- as.data.frame(customer_churn_df)
+
+skew_values <- sapply(customer_churn_df, function(x) {
+  if (is.numeric(x)) skewness(x, na.rm = TRUE) else NA
+})
+# View skewness of all numeric columns
+print(skew_values)
+```
+
+The data in the dataset is not scaled, we need to scale the data before training the model. 
+Standardization is sufficient for logistic regression so we are not normalizing the data.
+
+```{r}
+## Scaling the data 
+cols_to_scale <- c("Age", 
+                   "IncomeLevel", 
+                   "Total_amount_spent", 
+                   "Transaction_frequency", 
+                   "DaysSinceLastInteraction", 
+                   "LoginFrequency", 
+                   "DaysSinceLastLogin")
+
+customer_churn_df[cols_to_scale]<- as.data.frame(scale(customer_churn_df[cols_to_scale],
+                                                       center = TRUE, scale = TRUE))
+head(customer_churn_df)
+```
+
+### Task 2: Building a Machine Learning Model
+
+####  Introduction
+
+In this task, you will focus on developing a robust machine learning model to predict customer churn. Your objective is to select an appropriate algorithm, train and validate the model, and propose evaluation metrics that will help assess its performance. This task is pivotal for providing actionable insights that can inform business strategies at Lloyds Banking Group.
+
+#### Instructions
+##### Select an appropriate machine learning algorithm:
+
+* Review the characteristics of the data set and the nature of the churn prediction problem.
+
+* Consider algorithms such as logistic regression, decision trees, random forests, gradient boosting machines, or neural networks.
+
+* Choose an algorithm that balances accuracy and interpretability, suitable for the business context.
+
+##### Build and train the model:
+
+* Use the preprocessed data set from Task 1 to train your chosen model.
+
+* Implement techniques like cross-validation to ensure the model generalises well to unseen data.
+
+* Perform hyperparameter tuning to optimise the model’s performance.
+
+##### Evaluate model performance:
+
+* Select appropriate metrics to evaluate the model's performance, such as precision, recall, F1 score, ROC-AUC, and confusion matrix analysis.
+
+* Consider the implications of each metric in the context of imbalanced data sets, ensuring that the evaluation provides a comprehensive view of the model's effectiveness.
+
+##### Suggest ways to improve and utilise the model:
+
+* Provide recommendations on how the model can be used by the business to identify at-risk customers and develop retention strategies.
+
+* Discuss any potential improvements or adjustments to the model that could enhance its accuracy or applicability in different business scenarios.
+
+##### Deliverable:
+
+Report submission: Compile a comprehensive report that includes:
+
+* A detailed description of the selected algorithm and the rationale behind its choice.
+
+* The trained model, along with performance metrics and evaluation results.
+
+* Suggested ways to utilise the model's predictions for business decision-making and potential areas for improvement.
+
+Ensure that your report is clear, concise, and well-organised, effectively communicating both the technical aspects of the model and its practical applications for the business. This report will be a critical tool for stakeholders to understand and leverage the predictive insights generated by your model.
+
+##### ML Model using Logistic Regression
+
+```{r}
+# Duplicating the dataset
+data<- customer_churn_df 
+
+# Convert the target variable as factor 
+data$ChurnStatus <- as.factor(data$ChurnStatus)
+```
+
+
+```{r}
+# logistic regression model
+
+# Set seed for reproducibility
+set.seed(123)
+# Splitting the data
+split <- sample.split(data$ChurnStatus, SplitRatio = 0.8)
+train <- subset(data, split== TRUE)
+test <- subset(data, split == FALSE)
+
+table(train$ChurnStatus)
+table(test$ChurnStatus)
+
+# Fitting test data into Logistic Regression model 
+model<- glm(ChurnStatus~., data = train, family = "binomial")
+summary(model)
+
+# Predicting the test set
+pred <- predict(model, test, type = "response")
+pred_class <- as.factor(ifelse(pred >0.5, "1", "0"))
+
+pred_class <- factor(pred_class, levels = c("0", "1"))
+test$ChurnStatus <- factor(test$ChurnStatus, levels = c("0", "1"))
+
+confusionMatrix(pred_class, test$ChurnStatus,positive = "1")
+```
+
+As there is high class imbalance the model predicted “0” for every test case, regardless of actual class.
+We can use methods like over-sampling, under sampling, ROSE, SMOTE methods to reduce this class imbalance
+
+```{r}
+set.seed(123)
+
+# Split data
+split <- sample.split(data$ChurnStatus, SplitRatio = 0.8)
+train <- subset(data, split == TRUE)
+test <- subset(data, split == FALSE)
+
+# Make names safe
+names(train) <- make.names(names(train))
+names(test) <- make.names(names(test))
+
+# Ensure response is factor with valid level names
+train$ChurnStatus <- factor(ifelse(train$ChurnStatus == "1", "yes", "no"))
+test$ChurnStatus <- factor(ifelse(test$ChurnStatus == "1", "yes", "no"))
+
+# Define a function to train, predict and evaluate
+run_model <- function(sampled_data, test_data, method_name) {
+  train.control <- trainControl(
+    method = "cv",
+    number = 5,
+    classProbs = TRUE,
+    summaryFunction = twoClassSummary
+  )
+  
+  model <- train(
+    ChurnStatus ~ .,
+    data = sampled_data,
+    method = "glm",
+    family = "binomial",
+    trControl = train.control,
+    metric = "ROC"
+  )
+  
+  pred <- predict(model, test_data, type = "prob")
+  pred_class <- as.factor(ifelse(pred[, "yes"] > 0.5, "yes", "no"))
+  
+  cm <- confusionMatrix(pred_class, test_data$ChurnStatus, positive = "yes")
+  cat("\n\n=============================\n")
+  cat("Sampling Method:", method_name, "\n")
+  cat("=============================\n")
+  print(table(sampled_data$ChurnStatus))
+  print(cm)
+}
+
+# Apply different sampling methods and run the model
+
+# Over-sampling
+over_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "over")$data
+run_model(over_sampled, test, "Over-sampling")
+
+# Under-sampling
+under_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "under")$data
+run_model(under_sampled, test, "Under-sampling")
+
+# Both over & under-sampling
+both_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "both")$data
+run_model(both_sampled, test, "Over + Under Sampling")
+
+# ROSE sampling
+rose_sampled <- ROSE(ChurnStatus ~ ., data = train)$data
+run_model(rose_sampled, test, "ROSE Sampling")
+```
+
+```{r}
+# SMOTE
+set.seed(121)
+train <- subset(data, split== TRUE)
+test <- subset(data, split == FALSE)
+
+names(train) <- make.names(names(train))
+names(test) <- make.names(names(test))
+
+X1 <- train[, -which(names(train) == "ChurnStatus")]  # all features
+X2 <- as.numeric(as.character(train$ChurnStatus))     # convert factor to numeric (0/1)
+train$ChurnStatus <- factor(train$ChurnStatus, levels = c("0", "1"))
+smote_output <- SMOTE(X1, X2,K= 2)
+SMOTE_sample_data <- smote_output$data
+
+names(SMOTE_sample_data) <- make.names(names(SMOTE_sample_data))
+
+# Ensure target is a factor with two levels: "0" (negative), "1" (positive)
+SMOTE_sample_data$class <- factor(ifelse(SMOTE_sample_data$class == "1", "yes", "no"))
+test$ChurnStatus <- factor(ifelse(test$ChurnStatus == "1", "yes", "no"))
+
+# Train control with class probabilities and summary function for ROC
+train.control <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE)
+
+# Train logistic regression model using caret
+model <- train(
+  class ~ .,
+  data = SMOTE_sample_data,
+  method = "glm",
+  family = "binomial",
+  trControl = train.control,
+  metric = "Kappa"
+)
+
+# Predict probabilities on test set
+pred_probs <- predict(model, newdata = test, type = "prob")
+
+# Convert probabilities to class predictions using threshold 0.5
+pred_class <- as.factor(ifelse(pred_probs[, "yes"] > 0.5, "yes", "no"))
+
+#Ensure test$ChurnStatus is a factor with same levels
+#test$ChurnStatus <- factor(test$ChurnStatus, levels = c("0", "1"))
+
+# Confusion matrix
+confusionMatrix(pred_class, test$ChurnStatus, positive = "yes")
+```
+
+##### ML Model using Decision Tree
+```{r}
+# Decision Tree Model
+
+set.seed(1234)
+
+# Split into training and testing sets
+split <- sample.split(data$ChurnStatus, SplitRatio = 0.8)
+train <- subset(data, split == TRUE)
+test <- subset(data, split == FALSE)
+
+# Make column names safe
+names(train) <- make.names(names(train))
+names(test) <- make.names(names(test))
+
+# Apply both over- and under-sampling
+both_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "both")$data
+
+# Train decision tree classifier
+tree_model <- rpart(ChurnStatus ~ ., data = both_sampled, method = "class",
+  control = rpart.control(
+    cp = 0.005,
+    minsplit = 20,
+    minbucket = 10,
+    maxdepth = 5,
+    xval = 10
+  ))
+
+# Get predicted probabilities for class "1"
+tree_model_prob <- predict(tree_model, test, type = "prob")[, "1"]
+
+# Convert probabilities to class predictions using 0.5 threshold
+tree_model_prob_class <- as.factor(ifelse(tree_model_prob > 0.5, "1", "0"))
+
+# Evaluate with confusion matrix
+confusionMatrix(tree_model_prob_class, test$ChurnStatus, positive = "1")
+
+# Visualize the tree
+rpart.plot(tree_model)
+prp(tree_model)
+```
+
+
+##### ML Model using Random Forest
+```{r}
+# Random Forest Model
+
+set.seed(111)
+
+# Split into training and testing sets
+split <- sample.split(data$ChurnStatus, SplitRatio = 0.8)
+train <- subset(data, split == TRUE)
+test <- subset(data, split == FALSE)
+
+# Make column names safe
+names(train) <- make.names(names(train))
+names(test) <- make.names(names(test))
+
+train$ChurnStatus <- factor(ifelse(train$ChurnStatus == "1", "yes", "no"))
+test$ChurnStatus <- factor(ifelse(test$ChurnStatus == "1", "yes", "no"))
+
+# Apply both over- and under-sampling
+under_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "under")$data
+
+control <- trainControl(method="cv", number=10, classProbs = TRUE,summaryFunction = twoClassSummary)
+rf_model <- train(ChurnStatus~., data=under_sampled, method="rf",metric= "ROC", trControl=control)
+
+rf_model
+
+rf_model_pred <- predict(rf_model, test, type = "prob")
+rf_model_pred_class <- as.factor(ifelse(rf_model_pred[, "yes"] > 0.53, "yes", "no"))
+
+confusionMatrix(rf_model_pred_class, test$ChurnStatus, positive = "yes")
+```
+
+##### ML Model using Xgboost 
+```{r, warning=FALSE, message=FALSE}
+# Xgboost Model
+
+set.seed(220)
+# Split into training and testing sets
+split <- sample.split(data$ChurnStatus, SplitRatio = 0.8)
+train <- subset(data, split == TRUE)
+test <- subset(data, split == FALSE)
+
+# Make column names safe
+names(train) <- make.names(names(train))
+names(test) <- make.names(names(test))
+
+train$ChurnStatus <- factor(ifelse(train$ChurnStatus == "1", "yes", "no"))
+test$ChurnStatus <- factor(ifelse(test$ChurnStatus == "1", "yes", "no"))
+
+# Apply both over- and under-sampling
+both_sampled <- ovun.sample(ChurnStatus ~ ., data = train, method = "under")$data
+
+control <- trainControl(method="cv", number=10, classProbs = TRUE, summaryFunction = twoClassSummary)
+# Prediction with no warning printed in console
+tmp <- tempfile()
+sink(tmp)
+xgb_model <- train(ChurnStatus~., data=both_sampled, method="xgbTree", metric="ROC", trControl=control, verbose = 0)
+sink()
+unlink(tmp) # optional: remove temp file
+
+xgb_model_pred <- predict(xgb_model, test, type = "prob")
+xgb_model_pred_class <- as.factor(ifelse(xgb_model_pred[, "yes"] > 0.51, "yes", "no"))
+
+confusionMatrix(xgb_model_pred_class, test$ChurnStatus, positive = "yes")
+varImp(xgb_model)
+```
+
+
+```{r}
+# ROC curve and AUC
+par(pty = "s")
+roc_obj <- roc(test$ChurnStatus, xgb_model_pred[, "yes"], plot= TRUE, 
+               legacy.axes = TRUE, percent = TRUE, 
+               xlab= "False Positive percentage",
+               ylab = "True Positive Percentage", col="#102E50",lwd = 2,
+               print.auc = TRUE,print.auc.y = 65, print.auc.x = 27)
+plot.roc(test$ChurnStatus, rf_model_pred[, "yes"], 
+         percent = TRUE,col="#B2A5FF",lwd = 2, print.auc = TRUE, add= TRUE, print.auc.y = 57,
+         print.auc.x = 27)
+
+plot.roc(test$ChurnStatus, tree_model_prob,percent = TRUE,col="#48A6A7",lwd = 2, print.auc = TRUE, add= TRUE, print.auc.y = 49,print.auc.x = 27)
+plot.roc(test$ChurnStatus,pred_probs[,"yes"],percent = TRUE,col="#BE3D2A",lwd = 2, print.auc = TRUE, add= TRUE, print.auc.y = 41, print.auc.x = 27)
+legend("bottomright", legend = c("XgBoost","Random Forest", "Decision Tree", "Logistic Regression"),
+       col = c("#102E50", "#B2A5FF","#48A6A7", "#BE3D2A"), lwd= 2)
+
+```
+
+#### Model Selection:
+
+Among the four models evaluated — Logistic Regression, Decision Tree, Random Forest, and XGBoost — the XGBoost model was selected as the most effective. While Logistic Regression achieved the highest overall accuracy (66.5%), it performed poorly in identifying the positive class, with a sensitivity of only 29.27%. In contrast, XGBoost achieved a significantly higher sensitivity (63.41%), the highest balanced accuracy (61.27%), and the highest ROC-AUC score, indicating superior discriminatory power between the classes. Additionally, XGBoost yielded the highest Cohen’s Kappa (0.1551), reflecting better agreement beyond chance. Therefore, due to its superior performance in handling class imbalance, distinguishing between classes, and effectively detecting the minority class, XGBoost is the most suitable model for this classification task.
+
+
+
+
