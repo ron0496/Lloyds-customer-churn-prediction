@@ -2,7 +2,7 @@
 
 This internship is provided by [Forage](https://www.theforage.com/simulations/lloyds-banking-group/data-science-fpey)
 
-This repository contains the [code and resources]() for the Data Science & Analytics Internship Program at Lloyds Banking Group through Forage . This program was divided into 3 tasks, each of which was designed to give me a taste of the work that data scientists and analysts do at Lloyds Banking Group. The tasks involved analyzing customer data, building predictive models, and presenting findings to stakeholders.The tasks were as follows:
+This repository contains the [code and resources](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Lloyd%20full%20report.pdf) for the Data Science & Analytics Internship Program at Lloyds Banking Group through Forage . This program was divided into 3 tasks, each of which was designed to give me a taste of the work that data scientists and analysts do at Lloyds Banking Group. The tasks involved analyzing customer data, building predictive models, and presenting findings to stakeholders.The tasks were as follows:
 
 1. Intro & Scenario
 
