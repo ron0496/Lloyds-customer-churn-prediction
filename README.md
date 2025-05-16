@@ -48,4 +48,4 @@ A final report was compiled outlining the data collection, EDA insights with vis
 
 
 
-Resources:
+Resources: [Task 1 Report](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Task%201.pdf)
