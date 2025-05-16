@@ -1,6 +1,8 @@
 # Lloyds-customer-churn-prediction
 
-This repository contains the code and resources for the Data Science & Analytics Internship Program at Lloyds Banking Group through Forage. This program was divided into 3 tasks, each of which was designed to give me a taste of the work that data scientists and analysts do at Lloyds Banking Group. The tasks involved analyzing customer data, building predictive models, and presenting findings to stakeholders.The tasks were as follows:
+This internship is provided by [Forage](https://www.theforage.com/simulations/lloyds-banking-group/data-science-fpey)
+
+This repository contains the [code and resources]() for the Data Science & Analytics Internship Program at Lloyds Banking Group through Forage . This program was divided into 3 tasks, each of which was designed to give me a taste of the work that data scientists and analysts do at Lloyds Banking Group. The tasks involved analyzing customer data, building predictive models, and presenting findings to stakeholders.The tasks were as follows:
 
 1. Intro & Scenario
 
@@ -68,3 +70,5 @@ Outlined improvement opportunities, including advanced feature engineering, eval
 Prepared a detailed report covering the reasoning behind algorithm selection, data preprocessing steps, model development and evaluation, actionable business insights, and suggestions for future enhancements.
 
 Resources: [Task 2 Report](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Task%202.pdf)
+
+(Certificate Link)[https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Zbnc2o4ok6kD2NEXx/EuvC8GPjkZ6xaiP9p_Zbnc2o4ok6kD2NEXx_aXM3Xh4DNSNAw9pzW_1747342336748_completion_certificate.pdf)
