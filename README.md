@@ -71,4 +71,4 @@ Prepared a detailed report covering the reasoning behind algorithm selection, da
 
 Resources: [Task 2 Report](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Task%202.pdf)
 
-(Certificate Link)[https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Zbnc2o4ok6kD2NEXx/EuvC8GPjkZ6xaiP9p_Zbnc2o4ok6kD2NEXx_aXM3Xh4DNSNAw9pzW_1747342336748_completion_certificate.pdf)
+[Certificate Link](https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/Zbnc2o4ok6kD2NEXx/EuvC8GPjkZ6xaiP9p_Zbnc2o4ok6kD2NEXx_aXM3Xh4DNSNAw9pzW_1747342336748_completion_certificate.pdf)
