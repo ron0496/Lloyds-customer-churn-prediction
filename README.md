@@ -58,6 +58,9 @@ Trained an XGBoost model using the preprocessed training data.
 
 Assessed model performance on the test set using several metrics: Classification report, ROC-AUC score (0.56) to measure the model’s ability to distinguish between classes, Sensitivity (Recall / True Positive Rate at 63%) to evaluate how well churners were identified, and Specificity (True Negative Rate at 59%) to measure correct identification of non-churners. The Confusion Matrix provided a visual representation of true/false positives and negatives, with an overall accuracy of 60%, indicating moderate predictive capability.
 
+To understand which factors contributed most to churn prediction, we analyzed the top 10 most important features using the trained XGBoost model. The features with the highest influence were:
+Total_amount_spent, Age, DaysSinceLastInteraction, LoginFrequency, DaysSinceLastLogin, Transaction_frequency, Groceries, Books, IncomeLevel, and ServiceUsage_Website.
+
 Generated business recommendations based on model predictions, such as initiating targeted retention campaigns for high-risk customers, implementing churn prevention strategies by addressing root causes, using churn risk scores for customer segmentation and personalization, and optimizing resource allocation by prioritizing valuable at-risk customers.
 
 Outlined improvement opportunities, including advanced feature engineering, evaluating simpler models for faster deployment, setting up regular retraining with updated data, integrating feedback from retention initiatives, and performing cost-benefit analysis of various retention tactics.
