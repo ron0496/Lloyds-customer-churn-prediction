@@ -64,4 +64,4 @@ Outlined improvement opportunities, including advanced feature engineering, eval
 
 Prepared a detailed report covering the reasoning behind algorithm selection, data preprocessing steps, model development and evaluation, actionable business insights, and suggestions for future enhancements.
 
-Resources: [Task 2 Report](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Task%201.pdf)
+Resources: [Task 2 Report](https://github.com/ron0496/Lloyds-customer-churn-prediction/blob/main/Task%202.pdf)
